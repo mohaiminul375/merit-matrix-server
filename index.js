@@ -34,6 +34,10 @@ async function run() {
     // scholarship manage
 
     // data post to server
+    app.get('/all-scholarship',async(req,res)=>{
+        const result= await scholarshipCollection.find().toArray()
+        res.send(result)
+    })
     app.post("/all-scholarship", async (req, res) => {
       const scholarship = req.body;
       const result = await scholarshipCollection.insertOne(scholarship);
