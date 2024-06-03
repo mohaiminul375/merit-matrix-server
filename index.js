@@ -31,6 +31,24 @@ async function run() {
     const scholarshipCollection = client
       .db("merit-matrix")
       .collection("all-scholarship");
+    const userCollection = client.db("merit-matrix").collection("users");
+
+    // user
+    app.get("/users", async (req, res) => {
+      const result = await userCollection.find().toArray();
+      res.send(result);
+    });
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      const query={email:user.email};
+      const existingUser=await userCollection.findOne(query);
+      if(existingUser){
+        return res.send({message:'user Already Exist',insertedId:null})
+      }
+      const result = await userCollection.insertOne(user);
+      res.send(result);
+    });
+
     // scholarship manage
 
     // data post to server
@@ -60,7 +78,7 @@ async function run() {
         },
       };
       const result = await scholarshipCollection.updateOne(query, updateDoc);
-      res.send(result); 
+      res.send(result);
     });
     app.delete("/all-scholarship/:id", async (req, res) => {
       const id = req.params.id;
