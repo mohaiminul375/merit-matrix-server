@@ -50,6 +50,18 @@ async function run() {
       res.send(result);
     });
 
+    app.patch("/all-scholarship/:id", async (req, res) => {
+      console.log(req.body);
+      const updateData = req.body;
+      const query = { _id: new ObjectId(req.params.id) };
+      const updateDoc = {
+        $set: {
+          ...updateData,
+        },
+      };
+      const result = await scholarshipCollection.updateOne(query, updateDoc);
+      res.send(result); 
+    });
     app.delete("/all-scholarship/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
