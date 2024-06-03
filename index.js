@@ -34,22 +34,28 @@ async function run() {
     // scholarship manage
 
     // data post to server
-    app.get('/all-scholarship',async(req,res)=>{
-        const result= await scholarshipCollection.find().toArray()
-        res.send(result)
-    })
-    app.get('/all-scholarship/:id',async(req,res)=>{
-      const id=req.params.id;
-      const query={_id:new ObjectId(id)}
-      const result= await scholarshipCollection.findOne(query)
-      res.send(result)
-    })
+    app.get("/all-scholarship", async (req, res) => {
+      const result = await scholarshipCollection.find().toArray();
+      res.send(result);
+    });
+    app.get("/all-scholarship/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await scholarshipCollection.findOne(query);
+      res.send(result);
+    });
     app.post("/all-scholarship", async (req, res) => {
       const scholarship = req.body;
       const result = await scholarshipCollection.insertOne(scholarship);
       res.send(result);
     });
 
+    app.delete("/all-scholarship/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await scholarshipCollection.deleteOne(query);
+      res.send(result);
+    });
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
