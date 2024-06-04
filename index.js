@@ -3,13 +3,11 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 require("dotenv").config();
+const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 3000;
-const corsOptions = {
-  origin: ["http://localhost:5173"],
-  optionSuccessStatus: 200,
-};
+
 app.use(express.json());
-app.use(cors(corsOptions));
+app.use(cors());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ixszr3u.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -33,12 +31,65 @@ async function run() {
       .collection("all-scholarship");
     const userCollection = client.db("merit-matrix").collection("users");
 
+    //  jwt
+    const verifyToken = (req, res, next) => {
+      // console.log(req.headers);
+      // console.log(req.headers.authorization)
+      if (!req.headers.authorization) {
+        return res.send({ message: "unauthorized access as" }).status(401);
+      }
+      const token = req.headers.authorization.split(" ")[1];
+      jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded) => {
+        if (err) {
+          return res.send({ message: "unauthorized access" }).status(401);
+        }
+        req.decoded = decoded;
+        next();
+      });
+    };
+
+    app.post("/jwt", async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN, {
+        expiresIn: "72h",
+      });
+      res.send({ token });
+    });
+    // verify admin
+    const verifyAdmin=async(req,res,next)=>{
+         const email=req.decoded.email;
+         const query={email:email}
+         const user=await userCollection.findOne(query);
+         const isAdmin= user?.role==='Admin';
+         const isModerator= user?.role==='Moderator';
+     if(!isAdmin && !isModerator){
+      res.send({message:'forbidden access'}).status(403)
+     }
+     next()
+    }
+
     // user
-    app.get("/users", async (req, res) => {
+    app.get("/users", verifyToken, async (req, res) => {
       const result = await userCollection.find().toArray();
       res.send(result);
     });
-    app.post("/users", async (req, res) => {
+    // get admin and moderator role
+    app.get("/users/adminOrMod/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
+      if (email !== req.decoded.email) {
+      return  res.status(403).send("forbidden access");
+      }
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      let isAdminOrMod;
+      if(user){
+        isAdminOrMod=user?.role==='Admin'? 'Admin':user?.role==='Moderator'?'Moderator':null;
+        
+      }
+      console.log(isAdminOrMod)
+      res.send({isAdminOrMod})
+    });
+    app.post("/users", verifyToken, async (req, res) => {
       const user = req.body;
       const query = { email: user.email };
       const existingUser = await userCollection.findOne(query);
@@ -48,9 +99,9 @@ async function run() {
       const result = await userCollection.insertOne(user);
       res.send(result);
     });
-    app.patch("/user/role/:id", async (req, res) => {
+    app.patch("/user/role/:id", verifyToken, async (req, res) => {
       const newRole = req.body.role;
-      console.log(newRole)
+      console.log(newRole);
       const query = { _id: new ObjectId(req.params.id) };
       const updateDoc = {
         $set: {
@@ -60,7 +111,7 @@ async function run() {
       const result = await userCollection.updateOne(query, updateDoc);
       res.send(result);
     });
-    app.delete("/users/:id", async (req, res) => {
+    app.delete("/users/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await userCollection.deleteOne(query);
