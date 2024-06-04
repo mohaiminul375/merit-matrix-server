@@ -34,14 +34,14 @@ async function run() {
     //  jwt
     const verifyToken = (req, res, next) => {
       // console.log(req.headers);
-      // console.log(req.headers.authorization)
+      console.log("req", req.headers.authorization);
       if (!req.headers.authorization) {
-        return res.send({ message: "unauthorized access as" }).status(401);
+        return res.status(401).send({ message: "unauthorized access as" });
       }
       const token = req.headers.authorization.split(" ")[1];
       jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded) => {
         if (err) {
-          return res.send({ message: "unauthorized access" }).status(401);
+          return res.status(401).send({ message: "unauthorized access" });
         }
         req.decoded = decoded;
         next();
@@ -56,40 +56,56 @@ async function run() {
       res.send({ token });
     });
     // verify admin
-    const verifyAdmin=async(req,res,next)=>{
-         const email=req.decoded.email;
-         const query={email:email}
-         const user=await userCollection.findOne(query);
-         const isAdmin= user?.role==='Admin';
-         const isModerator= user?.role==='Moderator';
-     if(!isAdmin && !isModerator){
-      res.send({message:'forbidden access'}).status(403)
-     }
-     next()
-    }
-
+    const verifyAdminOrMod = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      const isAdmin = user?.role === "Admin";
+      const isModerator = user?.role === "Moderator";
+      if (!isAdmin && !isModerator) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      next();
+    };
+    const verifyOnlyAdmin = async (req, res, next) => {
+      // console.log("verify admin");
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      const isAdmin = user?.role === "Admin";
+      console.log(user?.role);
+      console.log(isAdmin);
+      isAdmin ? next() : res.status(403).send({ message: "forbidden access" });
+      // if (isAdmin) {
+      //   console.log('adimin found')
+      //   next();
+      // }
+      //
+    };
     // user
-    app.get("/users", verifyToken, async (req, res) => {
+    app.get("/users", verifyToken, verifyOnlyAdmin, async (req, res) => {
       const result = await userCollection.find().toArray();
       res.send(result);
     });
     // get admin and moderator role
     app.get("/users/adminOrMod/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
-      if (email !== req.decoded.email) {
-      return  res.status(403).send("forbidden access");
-      }
+
       const query = { email: email };
       const user = await userCollection.findOne(query);
       let isAdminOrMod;
-      if(user){
-        isAdminOrMod=user?.role==='Admin'? 'Admin':user?.role==='Moderator'?'Moderator':null;
-        
+      if (user) {
+        isAdminOrMod =
+          user?.role === "Admin"
+            ? "Admin"
+            : user?.role === "Moderator"
+            ? "Moderator"
+            : "user";
       }
-      console.log(isAdminOrMod)
-      res.send({isAdminOrMod})
+      console.log(isAdminOrMod);
+      res.send({ isAdminOrMod });
     });
-    app.post("/users", verifyToken, async (req, res) => {
+    app.post("/users", verifyAdminOrMod, async (req, res) => {
       const user = req.body;
       const query = { email: user.email };
       const existingUser = await userCollection.findOne(query);
@@ -99,19 +115,24 @@ async function run() {
       const result = await userCollection.insertOne(user);
       res.send(result);
     });
-    app.patch("/user/role/:id", verifyToken, async (req, res) => {
-      const newRole = req.body.role;
-      console.log(newRole);
-      const query = { _id: new ObjectId(req.params.id) };
-      const updateDoc = {
-        $set: {
-          role: newRole,
-        },
-      };
-      const result = await userCollection.updateOne(query, updateDoc);
-      res.send(result);
-    });
-    app.delete("/users/:id", verifyToken, async (req, res) => {
+    app.patch(
+      "/user/role/:id",
+      verifyToken,
+      verifyOnlyAdmin,
+      async (req, res) => {
+        const newRole = req.body.role;
+        console.log(newRole);
+        const query = { _id: new ObjectId(req.params.id) };
+        const updateDoc = {
+          $set: {
+            role: newRole,
+          },
+        };
+        const result = await userCollection.updateOne(query, updateDoc);
+        res.send(result);
+      }
+    );
+    app.delete("/users/:id", verifyToken, verifyOnlyAdmin, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await userCollection.deleteOne(query);
@@ -131,30 +152,45 @@ async function run() {
       const result = await scholarshipCollection.findOne(query);
       res.send(result);
     });
-    app.post("/all-scholarship", async (req, res) => {
-      const scholarship = req.body;
-      const result = await scholarshipCollection.insertOne(scholarship);
-      res.send(result);
-    });
+    app.post(
+      "/all-scholarship",
+      verifyToken,
+      verifyAdminOrMod,
+      async (req, res) => {
+        const scholarship = req.body;
+        const result = await scholarshipCollection.insertOne(scholarship);
+        res.send(result);
+      }
+    );
 
-    app.patch("/all-scholarship/:id", async (req, res) => {
-      console.log(req.body);
-      const updateData = req.body;
-      const query = { _id: new ObjectId(req.params.id) };
-      const updateDoc = {
-        $set: {
-          ...updateData,
-        },
-      };
-      const result = await scholarshipCollection.updateOne(query, updateDoc);
-      res.send(result);
-    });
-    app.delete("/all-scholarship/:id", async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
-      const result = await scholarshipCollection.deleteOne(query);
-      res.send(result);
-    });
+    app.patch(
+      "/all-scholarship/:id",
+      verifyToken,
+      verifyAdminOrMod,
+      async (req, res) => {
+        console.log(req.body);
+        const updateData = req.body;
+        const query = { _id: new ObjectId(req.params.id) };
+        const updateDoc = {
+          $set: {
+            ...updateData,
+          },
+        };
+        const result = await scholarshipCollection.updateOne(query, updateDoc);
+        res.send(result);
+      }
+    );
+    app.delete(
+      "/all-scholarship/:id",
+      verifyToken,
+      verifyAdminOrMod,
+      async (req, res) => {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await scholarshipCollection.deleteOne(query);
+        res.send(result);
+      }
+    );
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
