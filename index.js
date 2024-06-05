@@ -7,8 +7,14 @@ const jwt = require("jsonwebtoken");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const port = process.env.PORT || 3000;
 
+const corsOptions = {
+  origin: ["http://localhost:5173", "http://localhost:5174"],
+
+  optionSuccessStatus: 200,
+};
+
 app.use(express.json());
-app.use(cors());
+app.use(cors(corsOptions));
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ixszr3u.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -31,6 +37,9 @@ async function run() {
       .db("merit-matrix")
       .collection("all-scholarship");
     const userCollection = client.db("merit-matrix").collection("users");
+    const appliedCollection = client
+      .db("merit-matrix")
+      .collection("applied-scholarship");
 
     //  jwt
     const verifyToken = (req, res, next) => {
@@ -77,11 +86,6 @@ async function run() {
       console.log(user?.role);
       console.log(isAdmin);
       isAdmin ? next() : res.status(403).send({ message: "forbidden access" });
-      // if (isAdmin) {
-      //   console.log('adimin found')
-      //   next();
-      // }
-      //
     };
     // user
     app.get("/users", verifyToken, verifyOnlyAdmin, async (req, res) => {
@@ -106,7 +110,7 @@ async function run() {
       console.log(isAdminOrMod);
       res.send({ isAdminOrMod });
     });
-    app.post("/users", verifyAdminOrMod, async (req, res) => {
+    app.post("/users", async (req, res) => {
       const user = req.body;
       const query = { email: user.email };
       const existingUser = await userCollection.findOne(query);
@@ -192,6 +196,13 @@ async function run() {
         res.send(result);
       }
     );
+
+    // manage applied scholarship
+    app.post("/applied-scholarship",verifyToken, async (req, res) => {
+      const applied_info = req.body;
+      const result = await appliedCollection.insertOne(applied_info);
+      res.send(result);
+    });
 
     // payment
     app.post("/create-payment-intent", async (req, res) => {
