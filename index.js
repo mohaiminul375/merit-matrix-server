@@ -198,7 +198,31 @@ async function run() {
     );
 
     // manage applied scholarship
-    app.post("/applied-scholarship",verifyToken, async (req, res) => {
+    app.get("/my-application", verifyToken, async (req, res) => {
+      const tokenEmail = req.decoded.email;
+      if (req.query?.email !== tokenEmail) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+
+      let query = {};
+      if (req.query?.email) {
+        query = {
+          applicant_email: req.query.email,
+        };
+      }
+      const result = await appliedCollection.find(query).toArray();
+      res.send(result);
+    });
+    app.get(
+      "/applied-scholarship",
+      verifyToken,
+      verifyAdminOrMod,
+      async (req, res) => {
+        const result = await appliedCollection.find().toArray();
+        res.send(result);
+      }
+    );
+    app.post("/applied-scholarship", verifyToken, async (req, res) => {
       const applied_info = req.body;
       const result = await appliedCollection.insertOne(applied_info);
       res.send(result);
