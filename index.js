@@ -93,7 +93,7 @@ async function run() {
       res.send(result);
     });
     // get admin and moderator role
-    app.get("/users/adminOrMod/:email", verifyToken, async (req, res) => {
+    app.get("/users/adminOrMod/:email",  async (req, res) => {
       const email = req.params.email;
 
       const query = { email: email };
