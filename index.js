@@ -93,7 +93,7 @@ async function run() {
       res.send(result);
     });
     // get admin and moderator role
-    app.get("/users/adminOrMod/:email",  async (req, res) => {
+    app.get("/users/adminOrMod/:email", async (req, res) => {
       const email = req.params.email;
 
       const query = { email: email };
@@ -105,7 +105,7 @@ async function run() {
             ? "Admin"
             : user?.role === "Moderator"
             ? "Moderator"
-            : "user";
+            : "User";
       }
       console.log(isAdminOrMod);
       res.send({ isAdminOrMod });
@@ -227,7 +227,20 @@ async function run() {
       const result = await appliedCollection.insertOne(applied_info);
       res.send(result);
     });
-
+    // send feedback
+    app.patch("/send-feedback/:id", async (req, res) => {
+      const id = req.params.id;
+      const feedback_message = req.body;
+      console.log(id,feedback_message);
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          feedback: feedback_message.feedback,
+        },
+      };
+      const result = await appliedCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
     // payment
     app.post("/create-payment-intent", async (req, res) => {
       const { application_fees } = req.body;
