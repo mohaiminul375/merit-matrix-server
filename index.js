@@ -227,46 +227,75 @@ async function run() {
       const result = await appliedCollection.insertOne(applied_info);
       res.send(result);
     });
-    // send feedback
-    app.patch("/send-feedback/:id",verifyToken,verifyAdminOrMod, async (req, res) => {
-      const id = req.params.id;
-      const feedback_message = req.body;
-      console.log(id,feedback_message);
-      const query = { _id: new ObjectId(id) };
-      const updateDoc = {
-        $set: {
-          feedback: feedback_message.feedback,
-        },
-      };
-      const result = await appliedCollection.updateOne(query, updateDoc);
-      res.send(result);
-    });
+    // send feedback by Admin or Moderator
+    app.patch(
+      "/send-feedback/:id",
+      verifyToken,
+      verifyAdminOrMod,
+      async (req, res) => {
+        const id = req.params.id;
+        const feedback_message = req.body;
+        console.log(id, feedback_message);
+        const query = { _id: new ObjectId(id) };
+        const updateDoc = {
+          $set: {
+            feedback: feedback_message.feedback,
+          },
+        };
+        const result = await appliedCollection.updateOne(query, updateDoc);
+        res.send(result);
+      }
+    );
     // update status
-    app.patch("/update-status/:id",verifyToken,verifyAdminOrMod, async (req, res) => {
+    app.patch(
+      "/update-status/:id",
+      verifyToken,
+      verifyAdminOrMod,
+      async (req, res) => {
+        const id = req.params.id;
+        const new_status = req.body;
+        // console.log(id,new_status);
+        const query = { _id: new ObjectId(id) };
+        const updateDoc = {
+          $set: {
+            status: new_status.updatedStatus,
+          },
+        };
+        const result = await appliedCollection.updateOne(query, updateDoc);
+        res.send(result);
+      }
+    );
+    // cancel by user
+    app.patch("/cancel/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
-      const new_status = req.body;
       // console.log(id,new_status);
       const query = { _id: new ObjectId(id) };
       const updateDoc = {
         $set: {
-          status: new_status.updatedStatus,
+          status: "Canceled",
         },
       };
       const result = await appliedCollection.updateOne(query, updateDoc);
       res.send(result);
     });
-    app.patch("/cancel/:id",verifyToken, async (req, res) => {
-      const id = req.params.id;
-      // console.log(id,new_status);
-      const query = { _id: new ObjectId(id) };
-      const updateDoc = {
-        $set: {
-          status: 'Canceled',
-        },
-      };
-      const result = await appliedCollection.updateOne(query, updateDoc);
-      res.send(result);
-    });
+    // rejected by admin or moderator
+    app.patch(
+      "/reject/:id",
+      verifyToken,
+      verifyAdminOrMod,
+      async (req, res) => {
+        const id = req.params.id;
+        // console.log(id,new_status);
+        const query = { _id: new ObjectId(id) };
+        const updateDoc = {
+          $set: {
+            status: "Rejected",
+          },
+        };
+        const result = await appliedCollection.updateOne(query, updateDoc);
+        res.send(result);
+      }
+    );
     // payment
     app.post("/create-payment-intent", async (req, res) => {
       const { application_fees } = req.body;
