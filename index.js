@@ -228,7 +228,7 @@ async function run() {
       res.send(result);
     });
     // send feedback
-    app.patch("/send-feedback/:id", async (req, res) => {
+    app.patch("/send-feedback/:id",verifyToken,verifyAdminOrMod, async (req, res) => {
       const id = req.params.id;
       const feedback_message = req.body;
       console.log(id,feedback_message);
@@ -242,14 +242,26 @@ async function run() {
       res.send(result);
     });
     // update status
-    app.patch("/update-status/:id", async (req, res) => {
+    app.patch("/update-status/:id",verifyToken,verifyAdminOrMod, async (req, res) => {
       const id = req.params.id;
       const new_status = req.body;
-      console.log(id,new_status);
+      // console.log(id,new_status);
       const query = { _id: new ObjectId(id) };
       const updateDoc = {
         $set: {
           status: new_status.updatedStatus,
+        },
+      };
+      const result = await appliedCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
+    app.patch("/cancel/:id",verifyToken, async (req, res) => {
+      const id = req.params.id;
+      // console.log(id,new_status);
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: 'Canceled',
         },
       };
       const result = await appliedCollection.updateOne(query, updateDoc);
