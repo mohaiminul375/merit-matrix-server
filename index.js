@@ -296,6 +296,20 @@ async function run() {
         res.send(result);
       }
     );
+    app.patch("/update-my-application/:id", async (req, res) => {
+      const id = req.params.id;
+      const update_info = req.body;
+      const query = { _id: new ObjectId(id) };
+      console.log(update_info)
+      const updateDoc = {
+        $set: {
+         ...update_info
+        },
+      };
+      console.log('update info',updateDoc)
+      const result = await appliedCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
     // payment
     app.post("/create-payment-intent", async (req, res) => {
       const { application_fees } = req.body;
