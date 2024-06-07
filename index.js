@@ -241,6 +241,20 @@ async function run() {
       const result = await appliedCollection.updateOne(query, updateDoc);
       res.send(result);
     });
+    // update status
+    app.patch("/update-status/:id", async (req, res) => {
+      const id = req.params.id;
+      const new_status = req.body;
+      console.log(id,new_status);
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: new_status.updatedStatus,
+        },
+      };
+      const result = await appliedCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
     // payment
     app.post("/create-payment-intent", async (req, res) => {
       const { application_fees } = req.body;
