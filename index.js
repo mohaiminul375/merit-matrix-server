@@ -40,6 +40,9 @@ async function run() {
     const appliedCollection = client
       .db("merit-matrix")
       .collection("applied-scholarship");
+    const reviewCollection = client
+      .db("merit-matrix")
+      .collection("all-reviews");
 
     //  jwt
     const verifyToken = (req, res, next) => {
@@ -300,16 +303,25 @@ async function run() {
       const id = req.params.id;
       const update_info = req.body;
       const query = { _id: new ObjectId(id) };
-      console.log(update_info)
+      console.log(update_info);
       const updateDoc = {
         $set: {
-         ...update_info
+          ...update_info,
         },
       };
-      console.log('update info',updateDoc)
+      console.log("update info", updateDoc);
       const result = await appliedCollection.updateOne(query, updateDoc);
       res.send(result);
     });
+
+    // review
+    // review added by user
+    app.post("/all-reviews",verifyToken, async (req, res) => {
+      const review = req.body;
+      const result = await reviewCollection.insertOne(review);
+      res.send(result);
+    });
+
     // payment
     app.post("/create-payment-intent", async (req, res) => {
       const { application_fees } = req.body;
