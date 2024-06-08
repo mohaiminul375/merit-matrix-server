@@ -356,6 +356,14 @@ async function run() {
       const result = await reviewCollection.updateOne(query, updateDoc);
       res.send(result);
     });
+    // delete review
+    app.delete("/delete-review/:id", verifyToken, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await reviewCollection.deleteOne(query);
+      res.send(result);
+    });
+
     // payment
     app.post("/create-payment-intent", async (req, res) => {
       const { application_fees } = req.body;
