@@ -321,14 +321,41 @@ async function run() {
       const result = await reviewCollection.find().toArray();
       res.send(result);
     });
+    // user review
+    app.get("/my-reviews", verifyToken, async (req, res) => {
+      const tokenEmail = req.decoded.email;
+      if (req.query?.email !== tokenEmail) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
 
+      let query = {};
+      if (req.query?.email) {
+        query = {
+          applicant_email: req.query.email,
+        };
+      }
+      const result = await reviewCollection.find(query).toArray();
+      res.send(result);
+    });
     // review added by user
     app.post("/all-reviews", verifyToken, async (req, res) => {
       const review = req.body;
       const result = await reviewCollection.insertOne(review);
       res.send(result);
     });
-
+    // update review by user
+    app.patch("/update-review/:id", verifyToken, async (req, res) => {
+      const id = req.params.id;
+      const new_review = req.body;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          ...new_review,
+        },
+      };
+      const result = await reviewCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
     // payment
     app.post("/create-payment-intent", async (req, res) => {
       const { application_fees } = req.body;
