@@ -315,7 +315,13 @@ async function run() {
     });
 
     // review
-
+    // get review by scholarship
+    app.get("/scholarship-review/:id",verifyToken, async (req, res) => {
+      const id = req.params.id;
+      const query = { scholarship_id: id };
+      const result = await reviewCollection.find(query).toArray();
+      res.send(result);
+    });
     // get all review for admin and moderator
     app.get("/all-reviews", verifyToken, verifyAdminOrMod, async (req, res) => {
       const result = await reviewCollection.find().toArray();
