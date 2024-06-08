@@ -321,6 +321,18 @@ async function run() {
       const result = await reviewCollection.find().toArray();
       res.send(result);
     });
+    // delete review by admin or moderator
+    app.delete(
+      "/all-reviews/:id",
+      verifyToken,
+      verifyAdminOrMod,
+      async (req, res) => {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await reviewCollection.deleteOne(query);
+        res.send(result);
+      }
+    );
     // user review
     app.get("/my-reviews", verifyToken, async (req, res) => {
       const tokenEmail = req.decoded.email;
