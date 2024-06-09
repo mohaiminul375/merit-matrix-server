@@ -8,7 +8,11 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const port = process.env.PORT || 3000;
 
 const corsOptions = {
-  origin: ["http://localhost:5173", "http://localhost:5174"],
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "https://merit-matrix-375m.web.app",
+  ],
 
   optionSuccessStatus: 200,
 };
@@ -149,10 +153,17 @@ async function run() {
 
     // scholarship manage
 
-    // data post to server
+    // get all scholarship
     app.get("/all-scholarship", async (req, res) => {
-      const result = await scholarshipCollection.find().toArray();
+      const page=parseInt(req.query.page)-1;
+      const size=parseInt(req.query.size);
+      const result = await scholarshipCollection.find().skip(page*size).limit(size).toArray();
       res.send(result);
+    });
+    // all scholarship count
+    app.get("/all-scholarship-count", async (req, res) => {
+      const count = await scholarshipCollection.countDocuments();
+      res.send({ count });
     });
     app.get("/all-scholarship/:id", async (req, res) => {
       const id = req.params.id;
@@ -316,7 +327,7 @@ async function run() {
 
     // review
     // get review by scholarship
-    app.get("/scholarship-review/:id",verifyToken, async (req, res) => {
+    app.get("/scholarship-review/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = { scholarship_id: id };
       const result = await reviewCollection.find(query).toArray();
