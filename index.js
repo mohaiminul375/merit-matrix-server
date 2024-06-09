@@ -175,7 +175,15 @@ async function run() {
     });
     // all scholarship count
     app.get("/all-scholarship-count", async (req, res) => {
-      const count = await scholarshipCollection.countDocuments();
+      const search = req.query.search;
+      const query = {
+        $or: [
+          { scholarship_name: { $regex: search, $options: "i" } },
+          { university_name: { $regex: search, $options: "i" } },
+          { degree_name: { $regex: search, $options: "i" } },
+        ],
+      };
+      const count = await scholarshipCollection.countDocuments(query);
       res.send({ count });
     });
     app.get("/all-scholarship/:id", async (req, res) => {
