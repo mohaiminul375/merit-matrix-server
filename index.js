@@ -96,7 +96,13 @@ async function run() {
     };
     // user
     app.get("/users", verifyToken, verifyOnlyAdmin, async (req, res) => {
-      const result = await userCollection.find().toArray();
+      const filter_role = req.query.role;
+      let query = {};
+      if (filter_role) {
+        query = { role: filter_role }
+      };
+
+      const result = await userCollection.find(query).toArray();
       res.send(result);
     });
     // get admin and moderator role
