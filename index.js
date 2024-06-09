@@ -155,9 +155,22 @@ async function run() {
 
     // get all scholarship
     app.get("/all-scholarship", async (req, res) => {
-      const page=parseInt(req.query.page)-1;
-      const size=parseInt(req.query.size);
-      const result = await scholarshipCollection.find().skip(page*size).limit(size).toArray();
+      const page = parseInt(req.query.page) - 1;
+      const size = parseInt(req.query.size);
+      const search = req.query.search;
+      const query = {
+        $or: [
+          { scholarship_name: { $regex: search, $options: "i" } },
+          { university_name: { $regex: search, $options: "i" } },
+          { degree_name: { $regex: search, $options: "i" } },
+        ],
+      };
+
+      const result = await scholarshipCollection
+        .find(query)
+        .skip(page * size)
+        .limit(size)
+        .toArray();
       res.send(result);
     });
     // all scholarship count
