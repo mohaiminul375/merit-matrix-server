@@ -197,11 +197,14 @@ async function run() {
       res.send({ count });
     });
     // only 6 scholarship sorting
-    app.get('/all-scholarship-home',async(req,res)=>{
-      const result= await scholarshipCollection.find().sort({ application_fees: -1, post_date: -1 }).limit(6).toArray();
-      res.send(result)
-    })
-
+    app.get("/all-scholarship-home", async (req, res) => {
+      const result = await scholarshipCollection
+        .find()
+        .sort({ application_fees: -1, post_date: -1 })
+        .limit(6)
+        .toArray();
+      res.send(result);
+    });
 
     app.get("/all-scholarship/:id", async (req, res) => {
       const id = req.params.id;
@@ -267,25 +270,26 @@ async function run() {
     });
     app.get(
       "/applied-scholarship",
-
+      verifyToken,
+      verifyAdminOrMod,
       async (req, res) => {
-        // const apply = req.query.apply;
-        // const deadline = req.query.deadline;
-        // console.log(apply, deadline);
-        // let query = {};
+        const apply = req.query.apply;
+        const deadline = req.query.deadline;
+        console.log(apply, deadline);
+        let query = {};
 
-        // if (apply && deadline) {
-        //   query = {
-        //     apply_date: new Date(apply),
-        //     deadline: new Date(deadline),
-        //   };
-        // } else if (apply) {
-        //   query = { apply_date: new Date(apply) };
-        // } else if (deadline) {
-        //   query = { deadline: new Date(deadline) };
-        // }
+        if (apply && deadline) {
+          query = {
+            apply_date: apply,
+            deadline: deadline,
+          };
+        } else if (apply) {
+          query = { apply_date: apply };
+        } else if (deadline) {
+          query = { deadline: deadline };
+        }
         // console.log(query);
-        const result = await appliedCollection.find().toArray();
+        const result = await appliedCollection.find(query).toArray();
         res.send(result);
       }
     );
