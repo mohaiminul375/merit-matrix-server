@@ -99,8 +99,8 @@ async function run() {
       const filter_role = req.query.role;
       let query = {};
       if (filter_role) {
-        query = { role: filter_role }
-      };
+        query = { role: filter_role };
+      }
 
       const result = await userCollection.find(query).toArray();
       res.send(result);
@@ -179,6 +179,10 @@ async function run() {
         .toArray();
       res.send(result);
     });
+    app.get("/all-scholarship-admin", async (req, res) => {
+      const result = await scholarshipCollection.find().toArray();
+      res.send(result);
+    });
     // all scholarship count
     app.get("/all-scholarship-count", async (req, res) => {
       const search = req.query.search;
@@ -192,6 +196,13 @@ async function run() {
       const count = await scholarshipCollection.countDocuments(query);
       res.send({ count });
     });
+    // only 6 scholarship sorting
+    app.get('/all-scholarship-home',async(req,res)=>{
+      const result= await scholarshipCollection.find().sort({ application_fees: -1, post_date: -1 }).limit(6).toArray();
+      res.send(result)
+    })
+
+
     app.get("/all-scholarship/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -256,9 +267,24 @@ async function run() {
     });
     app.get(
       "/applied-scholarship",
-      verifyToken,
-      verifyAdminOrMod,
+
       async (req, res) => {
+        // const apply = req.query.apply;
+        // const deadline = req.query.deadline;
+        // console.log(apply, deadline);
+        // let query = {};
+
+        // if (apply && deadline) {
+        //   query = {
+        //     apply_date: new Date(apply),
+        //     deadline: new Date(deadline),
+        //   };
+        // } else if (apply) {
+        //   query = { apply_date: new Date(apply) };
+        // } else if (deadline) {
+        //   query = { deadline: new Date(deadline) };
+        // }
+        // console.log(query);
         const result = await appliedCollection.find().toArray();
         res.send(result);
       }
