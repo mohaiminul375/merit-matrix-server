@@ -51,7 +51,7 @@ async function run() {
     //  jwt
     const verifyToken = (req, res, next) => {
       // console.log(req.headers);
-      console.log("req", req.headers.authorization);
+      // console.log("req", req.headers.authorization);
       if (!req.headers.authorization) {
         return res.status(401).send({ message: "unauthorized access as" });
       }
@@ -90,8 +90,8 @@ async function run() {
       const query = { email: email };
       const user = await userCollection.findOne(query);
       const isAdmin = user?.role === "Admin";
-      console.log(user?.role);
-      console.log(isAdmin);
+      // console.log(user?.role);
+      // console.log(isAdmin);
       isAdmin ? next() : res.status(403).send({ message: "forbidden access" });
     };
     // user
@@ -120,7 +120,7 @@ async function run() {
             ? "Moderator"
             : "User";
       }
-      console.log(isAdminOrMod);
+      // console.log(isAdminOrMod);
       res.send({ isAdminOrMod });
     });
     app.post("/users", async (req, res) => {
@@ -139,7 +139,7 @@ async function run() {
       verifyOnlyAdmin,
       async (req, res) => {
         const newRole = req.body.role;
-        console.log(newRole);
+        // console.log(newRole);
         const query = { _id: new ObjectId(req.params.id) };
         const updateDoc = {
           $set: {
@@ -206,7 +206,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/all-scholarship/:id", async (req, res) => {
+    app.get("/all-scholarship/:id",verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await scholarshipCollection.findOne(query);
@@ -228,7 +228,7 @@ async function run() {
       verifyToken,
       verifyAdminOrMod,
       async (req, res) => {
-        console.log(req.body);
+        // console.log(req.body);
         const updateData = req.body;
         const query = { _id: new ObjectId(req.params.id) };
         const updateDoc = {
@@ -275,7 +275,7 @@ async function run() {
       async (req, res) => {
         const apply = req.query.apply;
         const deadline = req.query.deadline;
-        console.log(apply, deadline);
+        // console.log(apply, deadline);
         let query = {};
 
         if (apply && deadline) {
@@ -306,7 +306,7 @@ async function run() {
       async (req, res) => {
         const id = req.params.id;
         const feedback_message = req.body;
-        console.log(id, feedback_message);
+        // console.log(id, feedback_message);
         const query = { _id: new ObjectId(id) };
         const updateDoc = {
           $set: {
@@ -367,17 +367,17 @@ async function run() {
         res.send(result);
       }
     );
-    app.patch("/update-my-application/:id", async (req, res) => {
+    app.patch("/update-my-application/:id",verifyToken, async (req, res) => {
       const id = req.params.id;
       const update_info = req.body;
       const query = { _id: new ObjectId(id) };
-      console.log(update_info);
+      // console.log(update_info);
       const updateDoc = {
         $set: {
           ...update_info,
         },
       };
-      console.log("update info", updateDoc);
+      // console.log("update info", updateDoc);
       const result = await appliedCollection.updateOne(query, updateDoc);
       res.send(result);
     });
