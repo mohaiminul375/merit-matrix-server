@@ -191,10 +191,10 @@ async function run() {
       const total_fees_result = await appliedCollection
         .aggregate(totalFeesPipeline)
         .toArray();
-        // total scholarship
+      // total scholarship
       const totalScholarship = (await scholarshipCollection.find().toArray())
         .length;
-        // total user
+      // total user
       const totalUser = (await userCollection.find().toArray()).length;
 
       const response = {
@@ -443,6 +443,11 @@ async function run() {
     });
     // get all review for admin and moderator
     app.get("/all-reviews", verifyToken, verifyAdminOrMod, async (req, res) => {
+      const result = await reviewCollection.find().toArray();
+      res.send(result);
+    });
+    // get all review for home page
+    app.get("/home-review", async (req, res) => {
       const result = await reviewCollection.find().toArray();
       res.send(result);
     });
