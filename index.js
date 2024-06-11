@@ -156,7 +156,58 @@ async function run() {
       const result = await userCollection.deleteOne(query);
       res.send(result);
     });
+    // admin dashboard
+    app.get("/admin-dashboard", async (req, res) => {
+      const application_count = [
+        {
+          $group: {
+            _id: "$university_name",
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $sort: { count: -1 }, // sort by count descending
+        },
+      ];
+      const totalFeesPipeline = [
+        {
+          $group: {
+            _id: null,
+            totalApplicationFees: { $sum: { $toDouble: "$application_fees" } },
+          },
+        },
+        {
+          $project: {
+            _id: 0, //remove id
+            totalApplicationFees: 1,
+          },
+        },
+      ];
+      // application_count
+      const application_count_result = await appliedCollection
+        .aggregate(application_count)
+        .toArray();
+      // total fees
+      const total_fees_result = await appliedCollection
+        .aggregate(totalFeesPipeline)
+        .toArray();
+        // total scholarship
+      const totalScholarship = (await scholarshipCollection.find().toArray())
+        .length;
+        // total user
+      const totalUser = (await userCollection.find().toArray()).length;
 
+      const response = {
+        application_count: application_count_result,
+        totalFees:
+          total_fees_result.length > 0
+            ? total_fees_result[0].totalApplicationFees
+            : 0,
+        total_scholarship: totalScholarship,
+        total_user: totalUser,
+      };
+      res.send(response);
+    });
     // scholarship manage
 
     // get all scholarship
@@ -206,7 +257,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/all-scholarship/:id",verifyToken, async (req, res) => {
+    app.get("/all-scholarship/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await scholarshipCollection.findOne(query);
@@ -367,7 +418,7 @@ async function run() {
         res.send(result);
       }
     );
-    app.patch("/update-my-application/:id",verifyToken, async (req, res) => {
+    app.patch("/update-my-application/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const update_info = req.body;
       const query = { _id: new ObjectId(id) };
